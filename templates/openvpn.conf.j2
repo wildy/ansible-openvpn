@@ -1,0 +1,55 @@
+#
+# {{ ansible_managed }}
+#
+# General parameters
+dev tun
+verb 3
+user {{ openvpn_user }}
+group {{ openvpn_group }}
+persist-key
+persist-tun
+comp-lzo yes
+compat-names
+
+client-config-dir {{ openvpn_client_config_dir }}
+{% if openvpn_ccd_exclusive %}
+ccd-exclusive
+{% endif %}
+push "dhcp-option DNS 10.232.0.1"
+
+# Use Eurephia
+plugin /usr/lib/eurephia/eurephia-auth.so "-L 2 -i /usr/lib/eurephia/edb-sqlite.so -- /var/lib/eurephia/eurephiadb"
+
+
+# Network parameters
+{% if openvpn_create_udp_conf is defined and openvpn_create_udp_conf %}
+proto udp
+{% endif %}
+{% if openvpn_create_tcp_conf is defined and openvpn_create_tcp_conf %}
+proto tcp-server
+{% endif %}
+{% if openvpn_create_udp_conf is defined and openvpn_create_udp_conf %}
+port {{ openvpn_udp_port }}
+{% endif %}
+{% if openvpn_create_tcp_conf is defined and openvpn_create_tcp_conf %}
+port {{ openvpn_tcp_port }}
+{% endif %}
+{% if openvpn_create_udp_conf is defined and openvpn_create_udp_conf %}
+server {{ openvpn_network_udp }} {{ openvpn_netmask }}
+{% endif %}
+{% if openvpn_create_tcp_conf is defined and openvpn_create_tcp_conf %}
+server {{ openvpn_network_tcp }} {{ openvpn_netmask }}
+{% endif %}
+topology {{ openvpn_topology }}
+keepalive 10 30
+
+# Encryption parameters
+ca {{ openvpn_ca_file }}
+dh {{ openvpn_dh_file }}
+cert {{ openvpn_server_cert_file }}
+key {{ openvpn_server_key_file }}
+{% if openvpn_use_tlscrypt %}
+tls-crypt {{ openvpn_tlscrypt_key_file }}
+{% endif %}
+cipher AES-256-GCM
+

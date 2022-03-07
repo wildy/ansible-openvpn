@@ -1,2 +1,9 @@
 ---
 # tasks file for openvpn
+- name: Fail if OS family is not Debian
+  fail:
+    msg: "Sorry, only Debian/Ubuntu systems are supported as of now!"
+  when: ansible_os_family != "Debian"
+
+- include_tasks: install_debian.yml
+- include_tasks: configure.yml

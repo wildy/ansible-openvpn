@@ -1,2 +1,39 @@
 ---
-# defaults file for openvpn
+# OpenVPN
+openvpn_use_tlscrypt: true
+openvpn_network_udp: "10.232.0.0"
+openvpn_network_tcp: "10.232.1.0"
+openvpn_netmask: "255.255.255.0"
+openvpn_use_udp: true
+openvpn_use_tcp: true
+openvpn_udp_port: 27015
+openvpn_tcp_port: 993
+openvpn_config_dir: "/etc/openvpn"
+
+# Needed for Eurephia :()
+openvpn_user: root
+openvpn_group: root
+
+openvpn_topology: subnet
+openvpn_ccd_exclusive: false
+
+openvpn_key_dir: "{{ openvpn_config_dir }}/server/keys"
+openvpn_client_config_dir: "{{ openvpn_config_dir }}/server/ccd"
+openvpn_tlscrypt_key_file: "{{ openvpn_key_dir }}/tlscrypt.key"
+openvpn_dh_file: "{{ openvpn_key_dir }}/dh.pem"
+openvpn_ca_file: "{{ openvpn_key_dir }}/ca.crt"
+openvpn_server_cert_file: "{{ openvpn_key_dir }}/{{ ansible_fqdn }}.server.crt"
+openvpn_server_key_file: "{{ openvpn_key_dir }}/{{ ansible_fqdn }}.server.key"
+openvpn_server_csr_file: "{{ openvpn_key_dir }}/{{ ansible_fqdn }}.server.csr"
+
+
+# OpenSSL
+openssl_config_file: "{{ openvpn_key_dir }}/openssl.conf"
+openssl_cert_cn: "{{ ansible_fqdn }}"
+openssl_cert_country: "MV"
+openssl_cert_state: "A Land Untouched By Modern Dentistry"
+openssl_cert_locality: "Lutenblag"
+openssl_cert_org: "Trikolor Inc."
+openssl_cert_ou: "Bureaucracy Dept."
+openssl_cert_email: "root@example.com"
+

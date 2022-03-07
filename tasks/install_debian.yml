@@ -1,0 +1,9 @@
+---
+- name: Install OpenVPN package (Debian)
+  package:
+    name: "{{ item }}"
+    state: "present"
+  with_items:
+    - openvpn
+    - eurephia
+  when: ansible_os_family == "Debian"

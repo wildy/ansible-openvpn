@@ -1,0 +1,17 @@
+#
+# {{ ansible_managed }}
+#
+[ req ]
+prompt = no
+default_bits = 4096
+default_md = SHA256
+encrypt_key = no
+distinguished_name = dn
+
+[ dn ]
+C={{ openssl_cert_country }}
+ST={{ openssl_cert_state }}
+L={{ openssl_cert_locality }}
+O={{ openssl_cert_org }}
+OU={{ openssl_cert_ou }}
+CN={{ openssl_cert_cn }}

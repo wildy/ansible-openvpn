@@ -1,0 +1,96 @@
+---
+- name: Create OpenVPN dirs
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+  with_items:
+    - { path: "{{ openvpn_config_dir }}", mode: "0755", owner: "root", group: "adm" }
+    - { path: "{{ openvpn_key_dir }}", mode: "0700", owner: "root", group: "adm" }
+    - { path: "{{ openvpn_client_config_dir }}", mode: "0755", owner: "root", group: "adm" }
+
+- name: Set fact if using TCP
+  set_fact: openvpn_create_tcp_conf=true
+  when: openvpn_use_tcp is defined and openvpn_use_tcp
+
+- name: Create OpenVPN config file (TCP)
+  template:
+    src: openvpn.conf.j2
+    dest: "{{ openvpn_config_dir }}/openvpn-tcp.conf"
+    mode: 0640
+  when: openvpn_create_tcp_conf is defined and openvpn_create_tcp_conf
+  notify:
+    - Restart OpenVPN (TCP)
+
+- name: Unset openvpn_create_tcp_conf
+  set_fact: openvpn_create_tcp_conf=false
+
+- name: Set fact if using UDP
+  set_fact: openvpn_create_udp_conf=true
+  when: openvpn_use_udp is defined and openvpn_use_udp
+
+- name: Create OpenVPN config file (UDP)
+  template:
+    src: openvpn.conf.j2
+    dest: "{{ openvpn_config_dir }}/openvpn-udp.conf"
+    owner: "root"
+    group: "adm"
+    mode: 0640
+  when: openvpn_create_udp_conf is defined and openvpn_create_udp_conf
+  notify:
+    - Restart OpenVPN (UDP)
+
+- name: Unset openvpn_create_udp_conf
+  set_fact: openvpn_create_udp_conf=false
+
+- name: Generate DH parameters
+  shell: openssl dhparam 2048 > {{ openvpn_dh_file }}
+  args:
+    creates: "{{ openvpn_dh_file }}"
+
+- name: Generate server key
+  command: openssl genrsa -out {{ openvpn_server_key_file }} 2048
+  args:
+    creates: "{{ openvpn_server_key_file }}"
+
+- name: Copy tlscrypt key
+  copy:
+    dest: "{{ openvpn_tlscrypt_key_file }}"
+    content: "{{ openvpn_tlscrypt_key }}"
+  when: openvpn_use_tlscrypt is defined and openvpn_use_tlscrypt
+
+- name: Copy CA certificate
+  copy:
+    src: ca.crt
+    dest: "{{ openvpn_ca_file }}"
+
+- name: Set security mode on server keys
+  file:
+    mode: 0600
+    owner: "root"
+    group: "adm"
+    path: "{{ item }}"
+  with_items:
+    - "{{ openvpn_server_key_file }}"
+    - "{{ openvpn_tlscrypt_key_file }}"
+
+- name: Create OpenSSL config file
+  template:
+    src: openssl.conf.j2
+    dest: "{{ openssl_config_file }}"
+
+- name: Generate server certificate request
+  command: openssl req -key {{ openvpn_server_key_file }} -new -out {{ openvpn_server_csr_file }} -config {{ openssl_config_file }}
+  args:
+    creates: "{{ openvpn_server_csr_file }}"
+
+- name: Ensure OpenVPN services are started
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  with_items:
+    - openvpn@openvpn-tcp
+    - openvpn@openvpn-udp
